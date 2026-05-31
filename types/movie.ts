@@ -14,6 +14,7 @@ export type Movie = {
   genres: string[];
   genreIds: number[];
   rating: number;
+  popularity: number;
   originalLanguage: string;
   originalCountries: string[];
   director: string | null;

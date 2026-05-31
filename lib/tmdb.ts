@@ -3,6 +3,7 @@ import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const EXCLUDED_NON_FILM_GENRE_IDS = [99, 10402, 10770];
+const MIN_MAINSTREAM_POPULARITY = 8;
 
 type TmdbMovie = {
   id: number;
@@ -15,6 +16,7 @@ type TmdbMovie = {
   genre_ids?: number[];
   genres?: Genre[];
   vote_average?: number;
+  popularity?: number;
   original_language?: string;
   origin_country?: string[];
   tagline?: string;
@@ -102,6 +104,7 @@ function mapMovie(movie: TmdbMovie, genreMap: Map<number, string>): Movie {
     genres: movie.genres?.map((genre) => genre.name) ?? genreIds.map((id) => genreMap.get(id)).filter(Boolean) as string[],
     genreIds,
     rating: Number((movie.vote_average ?? 0).toFixed(1)),
+    popularity: movie.popularity ?? 0,
     originalLanguage: movie.original_language ?? "unknown",
     originalCountries: movie.origin_country ?? [],
     director: null,
@@ -118,6 +121,10 @@ function isEnglishMovie(movie: Movie) {
 
 function isNarrativeFilm(movie: Movie) {
   return !movie.genreIds.some((genreId) => EXCLUDED_NON_FILM_GENRE_IDS.includes(genreId));
+}
+
+function isHollywoodRelease(movie: Movie) {
+  return movie.originalCountries.includes("US") && movie.popularity >= MIN_MAINSTREAM_POPULARITY && Boolean(movie.posterPath);
 }
 
 function isFuturePrimaryRelease(movie: Movie) {
@@ -208,17 +215,26 @@ export async function getUpcomingMovies({
         sort_by: "primary_release_date.asc",
         include_adult: "false",
         include_video: "false",
-        with_release_type: "2|3",
+        with_release_type: "3",
         "primary_release_date.gte": selectedMonth?.start ?? today(),
         "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
         with_genres: genre,
         without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
         with_original_language: "en",
+        with_origin_country: "US",
+        "vote_count.gte": 1,
       });
 
   let results = data.results
     .map((movie) => mapMovie(movie, genreMap))
-    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie) && isNarrativeFilm(movie) && isFuturePrimaryRelease(movie))
+    .filter(
+      (movie) =>
+        isEnglishMovie(movie) &&
+        !isIndianMovie(movie) &&
+        isNarrativeFilm(movie) &&
+        isHollywoodRelease(movie) &&
+        isFuturePrimaryRelease(movie),
+    )
     .sort(compareByReleaseDate);
 
   if (query) {
