@@ -2,6 +2,7 @@ import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
+const EXCLUDED_NON_FILM_GENRE_IDS = [99, 10402, 10770];
 
 type TmdbMovie = {
   id: number;
@@ -115,6 +116,10 @@ function isEnglishMovie(movie: Movie) {
   return movie.originalLanguage === "en";
 }
 
+function isNarrativeFilm(movie: Movie) {
+  return !movie.genreIds.some((genreId) => EXCLUDED_NON_FILM_GENRE_IDS.includes(genreId));
+}
+
 function isFuturePrimaryRelease(movie: Movie) {
   return Boolean(movie.releaseDate) && movie.releaseDate >= today();
 }
@@ -207,12 +212,13 @@ export async function getUpcomingMovies({
         "primary_release_date.gte": selectedMonth?.start ?? today(),
         "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
         with_genres: genre,
+        without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
         with_original_language: "en",
       });
 
   let results = data.results
     .map((movie) => mapMovie(movie, genreMap))
-    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie) && isFuturePrimaryRelease(movie))
+    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie) && isNarrativeFilm(movie) && isFuturePrimaryRelease(movie))
     .sort(compareByReleaseDate);
 
   if (query) {
