@@ -4,6 +4,8 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const EXCLUDED_NON_FILM_GENRE_IDS = [99, 10402, 10770];
 const MIN_MAINSTREAM_POPULARITY = 8;
+const APP_PAGE_SIZE = 20;
+const DISCOVER_SCAN_PAGES = 20;
 
 type TmdbMovie = {
   id: number;
@@ -199,33 +201,44 @@ export async function getUpcomingMovies({
 
   const commonParams = {
     language: "en-US",
-    page: pageNumber,
     region,
   };
 
   const data = query
     ? await tmdbFetch<TmdbListResponse>("/search/movie", {
         ...commonParams,
+        page: pageNumber,
         query,
         include_adult: "false",
         primary_release_year: selectedMonth?.start.slice(0, 4),
       })
-    : await tmdbFetch<TmdbListResponse>("/discover/movie", {
-        ...commonParams,
-        sort_by: "primary_release_date.asc",
-        include_adult: "false",
-        include_video: "false",
-        with_release_type: "3",
-        "primary_release_date.gte": selectedMonth?.start ?? today(),
-        "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
-        with_genres: genre,
-        without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
-        with_original_language: "en",
-        with_origin_country: "US",
-        "vote_count.gte": 1,
-      });
+    : null;
 
-  let results = data.results
+  const rawResults = data
+    ? data.results
+    : (
+        await Promise.all(
+          Array.from({ length: DISCOVER_SCAN_PAGES }, (_, index) =>
+            tmdbFetch<TmdbListResponse>("/discover/movie", {
+              ...commonParams,
+              page: index + 1,
+              sort_by: "primary_release_date.asc",
+              include_adult: "false",
+              include_video: "false",
+              with_release_type: "3",
+              "primary_release_date.gte": selectedMonth?.start ?? today(),
+              "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
+              with_genres: genre,
+              without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
+              with_original_language: "en",
+              with_origin_country: "US",
+              "vote_count.gte": 1,
+            }),
+          ),
+        )
+      ).flatMap((response) => response.results);
+
+  let results = rawResults
     .map((movie) => mapMovie(movie, genreMap))
     .filter(
       (movie) =>
@@ -246,13 +259,16 @@ export async function getUpcomingMovies({
     });
   }
 
-  results = await addDirectors(results);
+  const totalResults = results.length;
+  const totalPages = Math.max(1, Math.ceil(totalResults / APP_PAGE_SIZE));
+  const paginatedResults = results.slice((pageNumber - 1) * APP_PAGE_SIZE, pageNumber * APP_PAGE_SIZE);
+  const resultsWithDirectors = await addDirectors(paginatedResults);
 
   return {
-    page: data.page,
-    totalPages: Math.min(data.total_pages, 500),
-    totalResults: data.total_results,
-    results,
+    page: pageNumber,
+    totalPages,
+    totalResults,
+    results: resultsWithDirectors,
     genres,
   };
 }
