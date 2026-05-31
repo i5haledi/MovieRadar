@@ -16,29 +16,7 @@ export type Movie = {
   rating: number;
   originalLanguage: string;
   originalCountries: string[];
-};
-
-export type CastMember = {
-  id: number;
-  name: string;
-  character: string;
-  profilePath: string | null;
-};
-
-export type Trailer = {
-  id: string;
-  name: string;
-  key: string;
-  site: string;
-  type: string;
-};
-
-export type MovieDetails = Movie & {
-  runtime: number | null;
-  tagline: string;
-  status: string;
-  cast: CastMember[];
-  trailer: Trailer | null;
+  director: string | null;
 };
 
 export type MoviesResponse = {

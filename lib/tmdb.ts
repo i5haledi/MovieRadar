@@ -1,4 +1,4 @@
-import type { CastMember, Genre, Movie, MovieDetails, MoviesResponse, Trailer } from "@/types/movie";
+import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
@@ -16,7 +16,6 @@ type TmdbMovie = {
   vote_average?: number;
   original_language?: string;
   origin_country?: string[];
-  runtime?: number | null;
   tagline?: string;
   status?: string;
 };
@@ -29,16 +28,11 @@ type TmdbListResponse = {
 };
 
 type TmdbCreditsResponse = {
-  cast: Array<{
+  crew: Array<{
     id: number;
     name: string;
-    character?: string;
-    profile_path: string | null;
+    job?: string;
   }>;
-};
-
-type TmdbVideosResponse = {
-  results: Trailer[];
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -109,11 +103,48 @@ function mapMovie(movie: TmdbMovie, genreMap: Map<number, string>): Movie {
     rating: Number((movie.vote_average ?? 0).toFixed(1)),
     originalLanguage: movie.original_language ?? "unknown",
     originalCountries: movie.origin_country ?? [],
+    director: null,
   };
 }
 
 function isIndianMovie(movie: Movie) {
   return movie.originalLanguage === "hi" || movie.originalCountries.includes("IN");
+}
+
+function isEnglishMovie(movie: Movie) {
+  return movie.originalLanguage === "en";
+}
+
+function compareByReleaseDate(first: Movie, second: Movie) {
+  if (!first.releaseDate) {
+    return 1;
+  }
+
+  if (!second.releaseDate) {
+    return -1;
+  }
+
+  return first.releaseDate.localeCompare(second.releaseDate);
+}
+
+async function getMovieDirector(id: number) {
+  const credits = await tmdbFetch<TmdbCreditsResponse>(`/movie/${id}/credits`, { language: "en-US" });
+  return credits.crew.find((member) => member.job === "Director")?.name ?? null;
+}
+
+async function addDirectors(movies: Movie[]) {
+  const directors = await Promise.all(
+    movies.map(async (movie) => ({
+      id: movie.id,
+      director: await getMovieDirector(movie.id),
+    })),
+  );
+  const directorMap = new Map(directors.map((item) => [item.id, item.director]));
+
+  return movies.map((movie) => ({
+    ...movie,
+    director: directorMap.get(movie.id) ?? null,
+  }));
 }
 
 function monthRange(month: string) {
@@ -163,7 +194,7 @@ export async function getUpcomingMovies({
         include_adult: "false",
         primary_release_year: selectedMonth?.start.slice(0, 4),
       })
-    : await tmdbFetch<TmdbListResponse>(genre || month ? "/discover/movie" : "/movie/upcoming", {
+    : await tmdbFetch<TmdbListResponse>("/discover/movie", {
         ...commonParams,
         sort_by: "primary_release_date.asc",
         include_adult: "false",
@@ -172,9 +203,13 @@ export async function getUpcomingMovies({
         "release_date.gte": selectedMonth?.start ?? today(),
         "release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
         with_genres: genre,
+        with_original_language: "en",
       });
 
-  let results = data.results.map((movie) => mapMovie(movie, genreMap)).filter((movie) => !isIndianMovie(movie));
+  let results = data.results
+    .map((movie) => mapMovie(movie, genreMap))
+    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie))
+    .sort(compareByReleaseDate);
 
   if (query) {
     const range = selectedMonth;
@@ -187,38 +222,13 @@ export async function getUpcomingMovies({
     });
   }
 
+  results = await addDirectors(results);
+
   return {
     page: data.page,
     totalPages: Math.min(data.total_pages, 500),
     totalResults: data.total_results,
     results,
     genres,
-  };
-}
-
-export async function getMovieDetails(id: string): Promise<MovieDetails> {
-  const [genres, movie, credits, videos] = await Promise.all([
-    getMovieGenres(),
-    tmdbFetch<TmdbMovie>(`/movie/${id}`, { language: "en-US" }),
-    tmdbFetch<TmdbCreditsResponse>(`/movie/${id}/credits`, { language: "en-US" }),
-    tmdbFetch<TmdbVideosResponse>(`/movie/${id}/videos`, { language: "en-US" }),
-  ]);
-  const genreMap = new Map(genres.map((item) => [item.id, item.name]));
-  const mapped = mapMovie(movie, genreMap);
-  const trailer = videos.results.find((video) => video.site === "YouTube" && video.type === "Trailer") ?? videos.results.find((video) => video.site === "YouTube") ?? null;
-  const cast: CastMember[] = credits.cast.slice(0, 10).map((member) => ({
-    id: member.id,
-    name: member.name,
-    character: member.character ?? "",
-    profilePath: member.profile_path,
-  }));
-
-  return {
-    ...mapped,
-    runtime: movie.runtime ?? null,
-    tagline: movie.tagline ?? "",
-    status: movie.status ?? "",
-    cast,
-    trailer,
   };
 }

@@ -1,15 +1,16 @@
 # MovieRadar
 
-MovieRadar is a simple modern Next.js app for browsing upcoming United States theatrical movies using real TMDB data. It supports filtering by genre and month, title search, pagination, and movie detail pages.
+MovieRadar is a simple modern Next.js app for browsing upcoming English-language United States theatrical movies using real TMDB data. It supports filtering by genre and month, title search, pagination, and Letterboxd search links.
 
 ## Features
 
 - Upcoming theatrical movies from TMDB
 - Server-side API routes so the TMDB key is never exposed to the browser
-- Poster and backdrop images from TMDB image URLs
+- Poster images from TMDB image URLs
 - Genre and month filters
 - Search by movie title
-- Detail pages with overview, release date, runtime, cast, rating, language, and trailer embed/link when available
+- Countdown, release date, genres, and director on each movie card
+- Movie cards open the title on Letterboxd
 - Responsive dark cinema-style UI
 - Loading, empty, and error states
 - Load more pagination
@@ -63,9 +64,7 @@ Do not commit `.env.local`. It is ignored by Git and should only be used on your
 ```text
 app/
   api/
-    movie/[id]/route.ts
     movies/route.ts
-  movie/[id]/page.tsx
   globals.css
   layout.tsx
   page.tsx
