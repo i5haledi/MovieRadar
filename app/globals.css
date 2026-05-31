@@ -5,6 +5,10 @@
   background: #050505;
 }
 
+html {
+  background: #050505;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -41,4 +45,3 @@ select {
 .poster-shadow {
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
 }
-

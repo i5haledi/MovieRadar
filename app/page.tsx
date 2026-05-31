@@ -108,13 +108,19 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setImportantOnly((current) => !current)}
-            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
+            aria-label={importantOnly ? "Show all movies" : "Hide unimportant movies"}
+            title={importantOnly ? "Show all movies" : "Hide unimportant movies"}
+            className={`flex size-10 items-center justify-center rounded-lg border transition ${
               importantOnly
-                ? "border-red-300/40 bg-red-500 text-white hover:bg-red-400"
-                : "border-white/10 bg-white/[0.06] text-zinc-300 hover:border-red-300/40 hover:text-white"
+                ? "border-zinc-500/60 bg-zinc-700/70 text-zinc-100 hover:bg-zinc-600"
+                : "border-white/10 bg-white/[0.05] text-zinc-500 hover:border-zinc-500/60 hover:bg-white/[0.08] hover:text-zinc-200"
             }`}
           >
-            {importantOnly ? "Showing important" : "Hide unimportant"}
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+              {importantOnly ? null : <path d="m4 4 16 16" />}
+            </svg>
           </button>
         </div>
       </section>
