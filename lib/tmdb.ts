@@ -115,6 +115,10 @@ function isEnglishMovie(movie: Movie) {
   return movie.originalLanguage === "en";
 }
 
+function isFuturePrimaryRelease(movie: Movie) {
+  return Boolean(movie.releaseDate) && movie.releaseDate >= today();
+}
+
 function compareByReleaseDate(first: Movie, second: Movie) {
   if (!first.releaseDate) {
     return 1;
@@ -200,25 +204,23 @@ export async function getUpcomingMovies({
         include_adult: "false",
         include_video: "false",
         with_release_type: "2|3",
-        "release_date.gte": selectedMonth?.start ?? today(),
-        "release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
+        "primary_release_date.gte": selectedMonth?.start ?? today(),
+        "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
         with_genres: genre,
         with_original_language: "en",
       });
 
   let results = data.results
     .map((movie) => mapMovie(movie, genreMap))
-    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie))
+    .filter((movie) => isEnglishMovie(movie) && !isIndianMovie(movie) && isFuturePrimaryRelease(movie))
     .sort(compareByReleaseDate);
 
   if (query) {
     const range = selectedMonth;
-    const minDate = today();
     results = results.filter((movie) => {
       const matchesGenre = !genre || movie.genreIds.includes(Number(genre));
       const matchesMonth = !range || (movie.releaseDate >= range.start && movie.releaseDate <= range.end);
-      const isUpcoming = !movie.releaseDate || movie.releaseDate >= minDate;
-      return matchesGenre && matchesMonth && isUpcoming;
+      return matchesGenre && matchesMonth;
     });
   }
 
