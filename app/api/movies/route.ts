@@ -9,6 +9,7 @@ export async function GET(request: Request) {
       genre: searchParams.get("genre") ?? undefined,
       month: searchParams.get("month") ?? undefined,
       query: searchParams.get("query") ?? undefined,
+      importantOnly: searchParams.get("importantOnly") === "true",
       page: searchParams.get("page") ?? "1",
     });
 

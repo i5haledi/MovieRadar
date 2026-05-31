@@ -4,8 +4,88 @@ const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const EXCLUDED_NON_FILM_GENRE_IDS = [99, 10402, 10770];
 const MIN_MAINSTREAM_POPULARITY = 1;
+const MOST_ANTICIPATED_POPULARITY = 8;
 const APP_PAGE_SIZE = 20;
 const DISCOVER_SCAN_PAGES = 20;
+const IMPORTANT_DIRECTORS = new Set([
+  "Christopher Nolan",
+  "Denis Villeneuve",
+  "Greta Gerwig",
+  "Jordan Peele",
+  "Quentin Tarantino",
+  "Martin Scorsese",
+  "Steven Spielberg",
+  "James Cameron",
+  "Ryan Coogler",
+  "Ari Aster",
+  "Robert Eggers",
+  "Bong Joon Ho",
+  "Guillermo del Toro",
+  "Patty Jenkins",
+  "Chloé Zhao",
+  "Rian Johnson",
+  "Matt Reeves",
+  "Sam Raimi",
+  "Edgar Wright",
+  "Wes Anderson",
+]);
+const TOP_HOLLYWOOD_STARS = new Set([
+  "Tom Cruise",
+  "Leonardo DiCaprio",
+  "Dwayne Johnson",
+  "Zendaya",
+  "Timothée Chalamet",
+  "Ryan Gosling",
+  "Margot Robbie",
+  "Florence Pugh",
+  "Anya Taylor-Joy",
+  "Robert Pattinson",
+  "Austin Butler",
+  "Pedro Pascal",
+  "Jenna Ortega",
+  "Sydney Sweeney",
+  "Scarlett Johansson",
+  "Chris Hemsworth",
+  "Chris Evans",
+  "Ryan Reynolds",
+  "Hugh Jackman",
+  "Brad Pitt",
+  "George Clooney",
+  "Jennifer Lawrence",
+  "Emma Stone",
+  "Tom Holland",
+  "Will Smith",
+  "Keanu Reeves",
+  "Jason Momoa",
+  "Vin Diesel",
+  "Joaquin Phoenix",
+  "Lady Gaga",
+]);
+const FRANCHISE_KEYWORDS = [
+  "avengers",
+  "batman",
+  "captain america",
+  "dc",
+  "dune",
+  "fast",
+  "ghostbusters",
+  "godzilla",
+  "harry potter",
+  "hunger games",
+  "jurassic",
+  "lord of the rings",
+  "marvel",
+  "mission: impossible",
+  "predator",
+  "scream",
+  "spider-man",
+  "star trek",
+  "star wars",
+  "superman",
+  "teenage mutant ninja turtles",
+  "transformers",
+  "x-men",
+];
 
 type TmdbMovie = {
   id: number;
@@ -25,6 +105,13 @@ type TmdbMovie = {
   status?: string;
 };
 
+type TmdbMovieDetails = {
+  belongs_to_collection: {
+    id: number;
+    name: string;
+  } | null;
+};
+
 type TmdbListResponse = {
   page: number;
   total_pages: number;
@@ -33,6 +120,10 @@ type TmdbListResponse = {
 };
 
 type TmdbCreditsResponse = {
+  cast: Array<{
+    id: number;
+    name: string;
+  }>;
   crew: Array<{
     id: number;
     name: string;
@@ -110,6 +201,9 @@ function mapMovie(movie: TmdbMovie, genreMap: Map<number, string>): Movie {
     originalLanguage: movie.original_language ?? "unknown",
     originalCountries: movie.origin_country ?? [],
     director: null,
+    topCast: [],
+    collectionName: null,
+    importanceReasons: [],
   };
 }
 
@@ -165,6 +259,55 @@ async function addDirectors(movies: Movie[]) {
   }));
 }
 
+function hasFranchiseSignal(movie: Movie) {
+  const searchable = `${movie.title} ${movie.originalTitle} ${movie.overview}`.toLowerCase();
+  return Boolean(movie.collectionName) || FRANCHISE_KEYWORDS.some((keyword) => searchable.includes(keyword));
+}
+
+function getImportanceReasons(movie: Movie) {
+  const reasons: string[] = [];
+
+  if (movie.director && IMPORTANT_DIRECTORS.has(movie.director)) {
+    reasons.push("notable director");
+  }
+
+  if (hasFranchiseSignal(movie)) {
+    reasons.push("IP/franchise");
+  }
+
+  if (movie.popularity >= MOST_ANTICIPATED_POPULARITY) {
+    reasons.push("public anticipation");
+  }
+
+  if (movie.topCast.some((actor) => TOP_HOLLYWOOD_STARS.has(actor))) {
+    reasons.push("top star");
+  }
+
+  return reasons;
+}
+
+async function enrichForImportance(movies: Movie[]) {
+  return Promise.all(
+    movies.map(async (movie) => {
+      const [credits, details] = await Promise.all([
+        tmdbFetch<TmdbCreditsResponse>(`/movie/${movie.id}/credits`, { language: "en-US" }),
+        tmdbFetch<TmdbMovieDetails>(`/movie/${movie.id}`, { language: "en-US" }),
+      ]);
+      const enrichedMovie = {
+        ...movie,
+        director: credits.crew.find((member) => member.job === "Director")?.name ?? null,
+        topCast: credits.cast.slice(0, 8).map((member) => member.name),
+        collectionName: details.belongs_to_collection?.name ?? null,
+      };
+
+      return {
+        ...enrichedMovie,
+        importanceReasons: getImportanceReasons(enrichedMovie),
+      };
+    }),
+  );
+}
+
 function monthRange(month: string) {
   const start = new Date(`${month}-01T00:00:00.000Z`);
   if (Number.isNaN(start.getTime())) {
@@ -186,12 +329,14 @@ export async function getUpcomingMovies({
   genre,
   month,
   query,
+  importantOnly = false,
   page = "1",
 }: {
   region?: string;
   genre?: string;
   month?: string;
   query?: string;
+  importantOnly?: boolean;
   page?: string;
 }): Promise<MoviesResponse> {
   const genres = await getMovieGenres();
@@ -258,10 +403,14 @@ export async function getUpcomingMovies({
     });
   }
 
+  if (importantOnly) {
+    results = (await enrichForImportance(results)).filter((movie) => movie.importanceReasons.length > 0);
+  }
+
   const totalResults = results.length;
   const totalPages = Math.max(1, Math.ceil(totalResults / APP_PAGE_SIZE));
   const paginatedResults = results.slice((pageNumber - 1) * APP_PAGE_SIZE, pageNumber * APP_PAGE_SIZE);
-  const resultsWithDirectors = await addDirectors(paginatedResults);
+  const resultsWithDirectors = importantOnly ? paginatedResults : await addDirectors(paginatedResults);
 
   return {
     page: pageNumber,

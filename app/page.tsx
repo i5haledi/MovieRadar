@@ -22,6 +22,7 @@ export default function Home() {
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [importantOnly, setImportantOnly] = useState(false);
   const [data, setData] = useState<ApiState>({ movies: [], genres: [], page: 1, totalPages: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -40,9 +41,10 @@ export default function Home() {
     if (filters.genre) searchParams.set("genre", filters.genre);
     if (filters.month) searchParams.set("month", filters.month);
     if (debouncedQuery) searchParams.set("query", debouncedQuery);
+    if (importantOnly) searchParams.set("importantOnly", "true");
 
     return searchParams;
-  }, [debouncedQuery, filters]);
+  }, [debouncedQuery, filters, importantOnly]);
 
   const fetchMovies = useCallback(async (page: number, append = false) => {
     const searchParams = new URLSearchParams(params);
@@ -102,6 +104,19 @@ export default function Home() {
 
       <section className="border-y border-white/10 py-5">
         <MovieFilters filters={filters} genres={data.genres} onChange={setFilters} />
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setImportantOnly((current) => !current)}
+            className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
+              importantOnly
+                ? "border-red-300/40 bg-red-500 text-white hover:bg-red-400"
+                : "border-white/10 bg-white/[0.06] text-zinc-300 hover:border-red-300/40 hover:text-white"
+            }`}
+          >
+            {importantOnly ? "Showing important" : "Hide unimportant"}
+          </button>
+        </div>
       </section>
 
       {error ? (

@@ -18,6 +18,9 @@ export type Movie = {
   originalLanguage: string;
   originalCountries: string[];
   director: string | null;
+  topCast: string[];
+  collectionName: string | null;
+  importanceReasons: string[];
 };
 
 export type MoviesResponse = {
@@ -32,5 +35,6 @@ export type MovieFilters = {
   genre?: string;
   month?: string;
   query?: string;
+  importantOnly?: string;
   page?: string;
 };
