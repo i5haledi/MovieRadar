@@ -127,7 +127,7 @@ function monthRange(month: string) {
 }
 
 export async function getUpcomingMovies({
-  region = "SA",
+  region = "US",
   genre,
   month,
   language,

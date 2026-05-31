@@ -1,6 +1,6 @@
 # MovieRadar
 
-MovieRadar is a simple modern Next.js app for browsing upcoming theatrical movies using real TMDB data. It defaults to Saudi Arabia as the release region and supports filtering by region, genre, month, language, title search, pagination, and movie detail pages.
+MovieRadar is a simple modern Next.js app for browsing upcoming theatrical movies using real TMDB data. It defaults to the United States as the release region and supports filtering by region, genre, month, language, title search, pagination, and movie detail pages.
 
 ## Features
 

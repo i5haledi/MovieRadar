@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const data = await getUpcomingMovies({
-      region: searchParams.get("region") ?? "SA",
+      region: searchParams.get("region") ?? "US",
       genre: searchParams.get("genre") ?? undefined,
       month: searchParams.get("month") ?? undefined,
       language: searchParams.get("language") ?? undefined,
@@ -19,4 +19,3 @@ export async function GET(request: Request) {
     return NextResponse.json({ message }, { status: 500 });
   }
 }
-

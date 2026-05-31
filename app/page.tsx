@@ -7,7 +7,7 @@ import SearchBar from "@/components/SearchBar";
 import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 
 const initialFilters: FilterState = {
-  region: "SA",
+  region: "US",
   genre: "",
   month: "",
   language: "",
@@ -100,7 +100,7 @@ export default function Home() {
             Upcoming movies in theaters
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
-            Browse coming cinema releases by region, genre, month, and language. Default region is Saudi Arabia.
+            Browse coming cinema releases by region, genre, month, and language. Default region is the United States.
           </p>
         </div>
 

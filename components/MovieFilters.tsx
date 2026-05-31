@@ -16,8 +16,8 @@ type MovieFiltersProps = {
 };
 
 const regions = [
-  { value: "SA", label: "Saudi Arabia" },
   { value: "US", label: "United States" },
+  { value: "SA", label: "Saudi Arabia" },
   { value: "GB", label: "United Kingdom" },
   { value: "AE", label: "United Arab Emirates" },
   { value: "IN", label: "India" },
@@ -120,4 +120,3 @@ export default function MovieFilters({ filters, genres, onChange }: MovieFilters
     </div>
   );
 }
-
