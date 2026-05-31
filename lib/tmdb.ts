@@ -3,7 +3,7 @@ import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
 const EXCLUDED_NON_FILM_GENRE_IDS = [99, 10402, 10770];
-const MIN_MAINSTREAM_POPULARITY = 3;
+const MIN_MAINSTREAM_POPULARITY = 1;
 const APP_PAGE_SIZE = 20;
 const DISCOVER_SCAN_PAGES = 20;
 
@@ -232,7 +232,6 @@ export async function getUpcomingMovies({
               without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
               with_original_language: "en",
               with_origin_country: "US",
-              "vote_count.gte": 1,
             }),
           ),
         )
