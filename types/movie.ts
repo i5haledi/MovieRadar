@@ -15,6 +15,7 @@ export type Movie = {
   genreIds: number[];
   rating: number;
   originalLanguage: string;
+  originalCountries: string[];
 };
 
 export type CastMember = {
@@ -56,4 +57,3 @@ export type MovieFilters = {
   query?: string;
   page?: string;
 };
-

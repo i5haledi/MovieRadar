@@ -21,8 +21,26 @@ function formatDate(value: string) {
   return dateFormatter.format(new Date(`${value}T00:00:00`));
 }
 
+function daysUntilRelease(value: string) {
+  if (!value) {
+    return "TBA";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const releaseDate = new Date(`${value}T00:00:00`);
+  const days = Math.ceil((releaseDate.getTime() - today.getTime()) / 86_400_000);
+
+  if (days <= 0) {
+    return "Today";
+  }
+
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
 export default function MovieCard({ movie }: MovieCardProps) {
   const poster = imageUrl(movie.posterPath, "w500");
+  const countdown = daysUntilRelease(movie.releaseDate);
 
   return (
     <Link
@@ -44,11 +62,15 @@ export default function MovieCard({ movie }: MovieCardProps) {
         <div className="absolute left-3 top-3 rounded-md bg-black/70 px-2 py-1 text-xs font-semibold text-amber-200 backdrop-blur">
           {movie.rating ? movie.rating.toFixed(1) : "NR"}
         </div>
+        <div className="absolute bottom-3 left-3 rounded-md bg-red-500 px-2.5 py-1.5 text-xs font-bold uppercase tracking-normal text-white shadow-lg shadow-black/30">
+          {countdown}
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{formatDate(movie.releaseDate)}</p>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">{countdown} remaining</p>
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white">{movie.title}</h2>
         </div>
 
@@ -70,4 +92,3 @@ export default function MovieCard({ movie }: MovieCardProps) {
     </Link>
   );
 }
-

@@ -30,12 +30,30 @@ function formatRuntime(minutes: number | null) {
   return hours ? `${hours}h ${remaining}m` : `${remaining}m`;
 }
 
+function daysUntilRelease(value: string) {
+  if (!value) {
+    return "TBA";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const releaseDate = new Date(`${value}T00:00:00`);
+  const days = Math.ceil((releaseDate.getTime() - today.getTime()) / 86_400_000);
+
+  if (days <= 0) {
+    return "Today";
+  }
+
+  return `${days} day${days === 1 ? "" : "s"}`;
+}
+
 export default async function MoviePage({ params }: MoviePageProps) {
   const { id } = await params;
   const movie = await getMovieDetails(id);
   const backdrop = imageUrl(movie.backdropPath, "original");
   const poster = imageUrl(movie.posterPath, "w780");
   const trailerUrl = movie.trailer ? `https://www.youtube.com/watch?v=${movie.trailer.key}` : null;
+  const countdown = daysUntilRelease(movie.releaseDate);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -72,7 +90,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
               ))}
             </div>
 
-            <div className="mt-6 grid gap-3 text-sm text-zinc-300 sm:grid-cols-4">
+            <div className="mt-6 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2 lg:grid-cols-5">
               <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
                 <span className="block text-xs uppercase tracking-[0.18em] text-zinc-500">Rating</span>
                 <strong className="mt-1 block text-xl text-white">{movie.rating ? movie.rating.toFixed(1) : "NR"}</strong>
@@ -88,6 +106,10 @@ export default async function MoviePage({ params }: MoviePageProps) {
               <div className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
                 <span className="block text-xs uppercase tracking-[0.18em] text-zinc-500">Status</span>
                 <strong className="mt-1 block text-xl text-white">{movie.status || "TBA"}</strong>
+              </div>
+              <div className="rounded-lg border border-red-400/25 bg-red-500/15 p-4">
+                <span className="block text-xs uppercase tracking-[0.18em] text-red-200/75">Countdown</span>
+                <strong className="mt-1 block text-xl text-white">{countdown}</strong>
               </div>
             </div>
           </div>
@@ -139,4 +161,3 @@ export default async function MoviePage({ params }: MoviePageProps) {
     </main>
   );
 }
-

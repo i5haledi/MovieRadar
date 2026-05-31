@@ -29,7 +29,6 @@ const languages = [
   { value: "", label: "Any language" },
   { value: "ar", label: "Arabic" },
   { value: "en", label: "English" },
-  { value: "hi", label: "Hindi" },
   { value: "fr", label: "French" },
   { value: "ja", label: "Japanese" },
   { value: "ko", label: "Korean" },

@@ -15,6 +15,7 @@ type TmdbMovie = {
   genres?: Genre[];
   vote_average?: number;
   original_language?: string;
+  origin_country?: string[];
   runtime?: number | null;
   tagline?: string;
   status?: string;
@@ -107,7 +108,12 @@ function mapMovie(movie: TmdbMovie, genreMap: Map<number, string>): Movie {
     genreIds,
     rating: Number((movie.vote_average ?? 0).toFixed(1)),
     originalLanguage: movie.original_language ?? "unknown",
+    originalCountries: movie.origin_country ?? [],
   };
+}
+
+function isIndianMovie(movie: Movie) {
+  return movie.originalLanguage === "hi" || movie.originalCountries.includes("IN");
 }
 
 function monthRange(month: string) {
@@ -171,7 +177,7 @@ export async function getUpcomingMovies({
         with_original_language: language,
       });
 
-  let results = data.results.map((movie) => mapMovie(movie, genreMap));
+  let results = data.results.map((movie) => mapMovie(movie, genreMap)).filter((movie) => !isIndianMovie(movie));
 
   if (query) {
     const range = selectedMonth;
