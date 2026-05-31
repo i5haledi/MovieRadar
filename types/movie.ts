@@ -50,10 +50,8 @@ export type MoviesResponse = {
 };
 
 export type MovieFilters = {
-  region?: string;
   genre?: string;
   month?: string;
-  language?: string;
   query?: string;
   page?: string;
 };

@@ -136,14 +136,12 @@ export async function getUpcomingMovies({
   region = "US",
   genre,
   month,
-  language,
   query,
   page = "1",
 }: {
   region?: string;
   genre?: string;
   month?: string;
-  language?: string;
   query?: string;
   page?: string;
 }): Promise<MoviesResponse> {
@@ -165,7 +163,7 @@ export async function getUpcomingMovies({
         include_adult: "false",
         primary_release_year: selectedMonth?.start.slice(0, 4),
       })
-    : await tmdbFetch<TmdbListResponse>(genre || month || language ? "/discover/movie" : "/movie/upcoming", {
+    : await tmdbFetch<TmdbListResponse>(genre || month ? "/discover/movie" : "/movie/upcoming", {
         ...commonParams,
         sort_by: "primary_release_date.asc",
         include_adult: "false",
@@ -174,7 +172,6 @@ export async function getUpcomingMovies({
         "release_date.gte": selectedMonth?.start ?? today(),
         "release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
         with_genres: genre,
-        with_original_language: language,
       });
 
   let results = data.results.map((movie) => mapMovie(movie, genreMap)).filter((movie) => !isIndianMovie(movie));
@@ -184,10 +181,9 @@ export async function getUpcomingMovies({
     const minDate = today();
     results = results.filter((movie) => {
       const matchesGenre = !genre || movie.genreIds.includes(Number(genre));
-      const matchesLanguage = !language || movie.originalLanguage === language;
       const matchesMonth = !range || (movie.releaseDate >= range.start && movie.releaseDate <= range.end);
       const isUpcoming = !movie.releaseDate || movie.releaseDate >= minDate;
-      return matchesGenre && matchesLanguage && matchesMonth && isUpcoming;
+      return matchesGenre && matchesMonth && isUpcoming;
     });
   }
 

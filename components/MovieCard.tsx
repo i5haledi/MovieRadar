@@ -7,20 +7,6 @@ type MovieCardProps = {
   movie: Movie;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
-function formatDate(value: string) {
-  if (!value) {
-    return "Date TBA";
-  }
-
-  return dateFormatter.format(new Date(`${value}T00:00:00`));
-}
-
 function daysUntilRelease(value: string) {
   if (!value) {
     return "TBA";
@@ -45,7 +31,9 @@ export default function MovieCard({ movie }: MovieCardProps) {
   return (
     <Link
       href={`/movie/${movie.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-zinc-950/72 transition duration-300 hover:-translate-y-1 hover:border-red-400/55 hover:bg-zinc-900/90"
+      aria-label={`View details for ${movie.title}`}
+      title={movie.title}
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-white/10 bg-zinc-950/70 transition duration-300 hover:-translate-y-1 hover:border-red-400/55 hover:bg-zinc-900/90"
     >
       <div className="relative aspect-[2/3] overflow-hidden bg-zinc-900">
         {poster ? (
@@ -59,34 +47,18 @@ export default function MovieCard({ movie }: MovieCardProps) {
         ) : (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-zinc-500">Poster unavailable</div>
         )}
-        <div className="absolute left-3 top-3 rounded-md bg-black/70 px-2 py-1 text-xs font-semibold text-amber-200 backdrop-blur">
-          {movie.rating ? movie.rating.toFixed(1) : "NR"}
-        </div>
-        <div className="absolute bottom-3 left-3 rounded-md bg-red-500 px-2.5 py-1.5 text-xs font-bold uppercase tracking-normal text-white shadow-lg shadow-black/30">
-          {countdown}
+        <div className="absolute inset-x-2 bottom-2 rounded-md bg-black/75 px-2.5 py-2 text-center text-xs font-bold uppercase tracking-normal text-white shadow-lg shadow-black/30 backdrop-blur">
+          {countdown === "Today" ? "Today" : `${countdown} left`}
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-300">{formatDate(movie.releaseDate)}</p>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-200">{countdown} remaining</p>
-          <h2 className="mt-1 text-lg font-semibold leading-tight text-white">{movie.title}</h2>
-        </div>
-
+      <div className="flex flex-1 flex-col p-3">
         <div className="flex flex-wrap gap-2">
-          {movie.genres.slice(0, 3).map((genre) => (
-            <span key={genre} className="rounded-md border border-white/10 px-2 py-1 text-xs text-zinc-300">
+          {movie.genres.slice(0, 2).map((genre) => (
+            <span key={genre} className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 text-[11px] text-zinc-300">
               {genre}
             </span>
           ))}
-        </div>
-
-        <p className="line-clamp-3 text-sm leading-6 text-zinc-400">{movie.overview || "No overview is available yet."}</p>
-
-        <div className="mt-auto flex items-center justify-between border-t border-white/10 pt-3 text-xs uppercase tracking-[0.16em] text-zinc-500">
-          <span>{movie.originalLanguage}</span>
-          <span>Details</span>
         </div>
       </div>
     </Link>

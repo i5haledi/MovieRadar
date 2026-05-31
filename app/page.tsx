@@ -7,10 +7,8 @@ import SearchBar from "@/components/SearchBar";
 import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 
 const initialFilters: FilterState = {
-  region: "US",
   genre: "",
   month: "",
-  language: "",
 };
 
 type ApiState = {
@@ -36,13 +34,11 @@ export default function Home() {
 
   const params = useMemo(() => {
     const searchParams = new URLSearchParams({
-      region: filters.region,
       page: "1",
     });
 
     if (filters.genre) searchParams.set("genre", filters.genre);
     if (filters.month) searchParams.set("month", filters.month);
-    if (filters.language) searchParams.set("language", filters.language);
     if (debouncedQuery) searchParams.set("query", debouncedQuery);
 
     return searchParams;
@@ -93,18 +89,13 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-      <header className="grid gap-8 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+      <header className="mx-auto flex w-full max-w-3xl flex-col items-center gap-7 py-10 text-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-red-300">MovieRadar</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-normal text-white sm:text-6xl">
-            Upcoming movies in theaters
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-400 sm:text-lg">
-            Browse coming cinema releases by region, genre, month, and language. Default region is the United States.
-          </p>
+          <h1 className="mt-4 text-5xl font-bold tracking-normal text-white sm:text-7xl">What Next</h1>
         </div>
 
-        <div className="rounded-lg border border-white/10 bg-black/35 p-4">
+        <div className="w-full rounded-lg border border-white/10 bg-black/35 p-4">
           <SearchBar value={query} onChange={setQuery} />
         </div>
       </header>
@@ -121,9 +112,9 @@ export default function Home() {
       ) : null}
 
       {isLoading ? (
-        <section className="grid gap-5 py-10 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="h-[34rem] animate-pulse rounded-lg border border-white/10 bg-white/[0.05]" />
+        <section className="grid grid-cols-2 gap-4 py-10 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <div key={index} className="aspect-[2/3] animate-pulse rounded-lg border border-white/10 bg-white/[0.05]" />
           ))}
         </section>
       ) : null}
@@ -132,14 +123,14 @@ export default function Home() {
         <section className="my-12 rounded-lg border border-white/10 bg-white/[0.04] p-10 text-center">
           <h2 className="text-2xl font-semibold text-white">No matching releases found</h2>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400">
-            Try a different month, region, genre, language, or search term.
+            Try a different month, genre, or search term.
           </p>
         </section>
       ) : null}
 
       {!isLoading && data.movies.length > 0 ? (
         <>
-          <section className="grid gap-5 py-10 sm:grid-cols-2 lg:grid-cols-4">
+          <section className="grid grid-cols-2 gap-4 py-10 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
             {data.movies.map((movie) => (
               <MovieCard key={`${movie.id}-${movie.releaseDate}`} movie={movie} />
             ))}

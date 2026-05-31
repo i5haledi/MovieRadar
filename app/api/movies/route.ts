@@ -5,10 +5,9 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const data = await getUpcomingMovies({
-      region: searchParams.get("region") ?? "US",
+      region: "US",
       genre: searchParams.get("genre") ?? undefined,
       month: searchParams.get("month") ?? undefined,
-      language: searchParams.get("language") ?? undefined,
       query: searchParams.get("query") ?? undefined,
       page: searchParams.get("page") ?? "1",
     });
