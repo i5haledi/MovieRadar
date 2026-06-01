@@ -34,6 +34,7 @@ export type MoviesResponse = {
 export type MovieFilters = {
   genre?: string;
   month?: string;
+  studio?: string;
   query?: string;
   importantOnly?: string;
   page?: string;

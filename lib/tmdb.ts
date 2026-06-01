@@ -110,6 +110,10 @@ type TmdbMovieDetails = {
     id: number;
     name: string;
   } | null;
+  production_companies?: Array<{
+    id: number;
+    name: string;
+  }>;
 };
 
 type TmdbListResponse = {
@@ -308,6 +312,26 @@ async function enrichForImportance(movies: Movie[]) {
   );
 }
 
+async function filterByStudioFromDetails(movies: Movie[], studio: string) {
+  const studioId = Number(studio);
+
+  if (!studioId) {
+    return movies;
+  }
+
+  const matches = await Promise.all(
+    movies.map(async (movie) => {
+      const details = await tmdbFetch<TmdbMovieDetails>(`/movie/${movie.id}`, { language: "en-US" });
+      return {
+        movie,
+        matchesStudio: details.production_companies?.some((company) => company.id === studioId) ?? false,
+      };
+    }),
+  );
+
+  return matches.filter((item) => item.matchesStudio).map((item) => item.movie);
+}
+
 function monthRange(month: string) {
   const start = new Date(`${month}-01T00:00:00.000Z`);
   if (Number.isNaN(start.getTime())) {
@@ -328,6 +352,7 @@ export async function getUpcomingMovies({
   region = "US",
   genre,
   month,
+  studio,
   query,
   importantOnly = false,
   page = "1",
@@ -335,6 +360,7 @@ export async function getUpcomingMovies({
   region?: string;
   genre?: string;
   month?: string;
+  studio?: string;
   query?: string;
   importantOnly?: boolean;
   page?: string;
@@ -374,6 +400,7 @@ export async function getUpcomingMovies({
               "primary_release_date.gte": selectedMonth?.start ?? today(),
               "primary_release_date.lte": selectedMonth?.end ?? oneYearFromToday(),
               with_genres: genre,
+              with_companies: studio,
               without_genres: EXCLUDED_NON_FILM_GENRE_IDS.join(","),
               with_original_language: "en",
               with_origin_country: "US",
@@ -401,6 +428,10 @@ export async function getUpcomingMovies({
       const matchesMonth = !range || (movie.releaseDate >= range.start && movie.releaseDate <= range.end);
       return matchesGenre && matchesMonth;
     });
+
+    if (studio) {
+      results = await filterByStudioFromDetails(results, studio);
+    }
   }
 
   if (importantOnly) {

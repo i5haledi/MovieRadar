@@ -8,7 +8,6 @@ type SearchBarProps = {
 export default function SearchBar({ value, onChange }: SearchBarProps) {
   return (
     <label className="block w-full">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">Search title</span>
       <div className="relative">
         <input
           value={value}

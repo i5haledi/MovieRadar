@@ -9,6 +9,7 @@ import type { Genre, Movie, MoviesResponse } from "@/types/movie";
 const initialFilters: FilterState = {
   genre: "",
   month: "",
+  studio: "",
 };
 
 type ApiState = {
@@ -40,6 +41,7 @@ export default function Home() {
 
     if (filters.genre) searchParams.set("genre", filters.genre);
     if (filters.month) searchParams.set("month", filters.month);
+    if (filters.studio) searchParams.set("studio", filters.studio);
     if (debouncedQuery) searchParams.set("query", debouncedQuery);
     if (importantOnly) searchParams.set("importantOnly", "true");
 
@@ -93,8 +95,7 @@ export default function Home() {
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
       <header className="mx-auto flex w-full max-w-3xl flex-col items-center gap-7 py-10 text-center">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-red-300">MovieRadar</p>
-          <h1 className="mt-4 text-5xl font-bold tracking-normal text-white sm:text-7xl">What Next</h1>
+          <h1 className="text-5xl font-bold tracking-normal text-white sm:text-7xl">What Next</h1>
         </div>
 
         <div className="w-full rounded-lg border border-white/10 bg-black/35 p-4">
@@ -112,14 +113,14 @@ export default function Home() {
             title={importantOnly ? "Show all movies" : "Hide unimportant movies"}
             className={`flex size-10 items-center justify-center rounded-lg border transition ${
               importantOnly
-                ? "border-zinc-500/60 bg-zinc-700/70 text-zinc-100 hover:bg-zinc-600"
+                ? "border-zinc-500/60 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
                 : "border-white/10 bg-white/[0.05] text-zinc-500 hover:border-zinc-500/60 hover:bg-white/[0.08] hover:text-zinc-200"
             }`}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
-              {importantOnly ? null : <path d="m4 4 16 16" />}
+              {importantOnly ? <path d="m4 4 16 16" /> : null}
             </svg>
           </button>
         </div>

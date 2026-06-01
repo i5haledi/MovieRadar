@@ -8,6 +8,7 @@ export async function GET(request: Request) {
       region: "US",
       genre: searchParams.get("genre") ?? undefined,
       month: searchParams.get("month") ?? undefined,
+      studio: searchParams.get("studio") ?? undefined,
       query: searchParams.get("query") ?? undefined,
       importantOnly: searchParams.get("importantOnly") === "true",
       page: searchParams.get("page") ?? "1",
